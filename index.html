@@ -278,8 +278,16 @@ const subU=f=>f.replace(/\d/g,d=>"₀₁₂₃₄₅₆₇₈₉"[d]);
 [...LIB].sort((a,b)=>a[1].localeCompare(b[1])).forEach(c=>{
   const o=document.createElement("option");o.value=c[0];o.textContent=`${c[1]} (${subU(c[0])})`;knownSel.appendChild(o);
 });
-knownSel.onchange=()=>{if(knownSel.value){loadFormula(knownSel.value);setDrawer(true)}};
-const _clear=clearMix;clearMix=function(){knownSel.value="";_clear()};
+let hiSet=null; // elements of the compound picked from the dropdown
+function setHighlight(formula){hiSet=formula?new Set(Object.keys(parse(formula))):null;apply()}
+knownSel.onchange=()=>{
+  if(knownSel.value){loadFormula(knownSel.value);setHighlight(knownSel.value)}
+  else setHighlight(null);
+};
+const _clear=clearMix;clearMix=function(){knownSel.value="";_clear();setHighlight(null)};
+// editing the mix by hand means it no longer matches the picked compound
+const _change=change;change=function(s,d){_change(s,d);if(hiSet){knownSel.value="";setHighlight(null)}};
+const _add=addToMix;addToMix=function(z){_add(z);if(hiSet){knownSel.value="";setHighlight(null)}};
 document.getElementById("clearBtn").onclick=clearMix;
 els.forEach((e,i)=>e.addEventListener("dblclick",()=>addToMix(i+1)));
 renderMix();
@@ -301,7 +309,8 @@ function apply(){
     const z=i+1;
     const okCat=!activeCat||CAT[i]===activeCat;
     const okQ=!s||SYM[i].toLowerCase()===s||NAME[i].toLowerCase().includes(s)||String(z)===s;
-    e.classList.toggle("dim",!(okCat&&okQ));
+    const okHi=!hiSet||hiSet.has(SYM[i]);
+    e.classList.toggle("dim",!(okCat&&okQ&&okHi));
   });
   if(s){const i=els.findIndex((e,i)=>!e.classList.contains("dim"));if(i>=0)show(i+1)}
 }
