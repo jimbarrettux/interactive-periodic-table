@@ -52,6 +52,8 @@ input{padding:8px 12px;border:1px solid var(--line);border-radius:8px;background
 .combine h3{font-size:.95rem;margin:16px 0 4px}
 .combine p.tip{color:var(--muted);font-size:.78rem;margin:0 0 10px}
 .mix{display:flex;flex-wrap:wrap;gap:6px;min-height:46px;padding:8px;border:1px dashed var(--line);border-radius:8px;align-items:center}
+.known-label{display:block;font-size:.75rem;color:var(--muted);margin-bottom:4px}
+.known{width:100%;padding:8px 10px;border:1px solid var(--line);border-radius:8px;background:var(--bg);color:var(--fg);font-size:.85rem;margin-bottom:10px;cursor:pointer}
 .mix .empty{color:var(--muted);font-size:.78rem}
 .chip{display:flex;align-items:center;gap:4px;padding:4px 6px;border-radius:6px;font-weight:700;font-size:.85rem;color:#1d1d1f;animation:pop .3s}
 :root[data-theme="dark"] .chip{color:#fff}
@@ -104,6 +106,8 @@ body.drawer-open{padding-right:calc(min(320px,85vw) + 16px);transition:padding-r
   <section class="combine">
     <h3>Combine elements</h3>
     <p class="tip">Use "Add to mix" on an element, or double-click it in the table. Adjust the counts, then combine.</p>
+    <label class="known-label" for="known">Known combinations</label>
+    <select id="known" class="known"><option value="">Choose a compound…</option></select>
     <div class="mix" id="mix"></div>
     <div class="formula" id="formula"></div>
     <div class="actions">
@@ -278,6 +282,14 @@ async function waterDemo(){
 document.getElementById("combineBtn").onclick=()=>combine();
 document.getElementById("clearBtn").onclick=clearMix;
 document.getElementById("waterBtn").onclick=waterDemo;
+const knownSel=document.getElementById("known");
+const subU=f=>f.replace(/\d/g,d=>"₀₁₂₃₄₅₆₇₈₉"[d]);
+[...LIB].sort((a,b)=>a[1].localeCompare(b[1])).forEach(c=>{
+  const o=document.createElement("option");o.value=c[0];o.textContent=`${c[1]} (${subU(c[0])})`;knownSel.appendChild(o);
+});
+knownSel.onchange=()=>{if(knownSel.value){loadFormula(knownSel.value);setDrawer(true)}};
+const _clear=clearMix;clearMix=function(){knownSel.value="";_clear()};
+document.getElementById("clearBtn").onclick=clearMix;
 els.forEach((e,i)=>e.addEventListener("dblclick",()=>addToMix(i+1)));
 renderMix();
 table.addEventListener("mouseleave",()=>{if(selected)show(selected)});
