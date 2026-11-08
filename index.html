@@ -1,0 +1,311 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Periodic Table</title>
+<style>
+:root{
+  --bg:#f7f7f5;--fg:#1d1d1f;--muted:#6b6b70;--card:#ffffff;--line:#e2e2e0;
+  --a:#ff8a80;--e:#ffcc80;--t:#ffe082;--p:#c5e1a5;--m:#80cbc4;--n:#81d4fa;--h:#9fa8da;--g:#ce93d8;--l:#f8bbd0;--c:#bcaaa4;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#141416;--fg:#ececf0;--muted:#9a9aa2;--card:#1f1f23;--line:#2e2e34;
+  --a:#b2453c;--e:#b3762a;--t:#a68b25;--p:#5e8a3a;--m:#2f8a80;--n:#2a7aa8;--h:#4f5aa8;--g:#8a4a9c;--l:#a8506f;--c:#7a5f55;
+}}
+:root[data-theme="dark"]{
+  --bg:#141416;--fg:#ececf0;--muted:#9a9aa2;--card:#1f1f23;--line:#2e2e34;
+  --a:#b2453c;--e:#b3762a;--t:#a68b25;--p:#5e8a3a;--m:#2f8a80;--n:#2a7aa8;--h:#4f5aa8;--g:#8a4a9c;--l:#a8506f;--c:#7a5f55;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--fg);font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;padding:24px 16px}
+h1{margin:0 0 4px;font-size:1.6rem;letter-spacing:-.01em}
+.sub{color:var(--muted);margin:0 0 16px;font-size:.9rem}
+.bar{display:flex;flex-wrap:wrap;gap:12px;align-items:center;margin-bottom:16px}
+input{padding:8px 12px;border:1px solid var(--line);border-radius:8px;background:var(--card);color:var(--fg);font-size:.9rem;min-width:220px}
+.legend{display:flex;flex-wrap:wrap;gap:6px}
+.legend button{border:1px solid var(--line);background:var(--card);color:var(--fg);border-radius:999px;padding:4px 10px;font-size:.75rem;cursor:pointer;display:flex;align-items:center;gap:6px}
+.legend button.on{outline:2px solid var(--fg)}
+.dot{width:10px;height:10px;border-radius:50%}
+.wrap{overflow-x:auto;padding-bottom:8px}
+.table{display:grid;grid-template-columns:repeat(18,minmax(52px,1fr));grid-template-rows:repeat(7,auto) 14px repeat(2,auto);gap:3px;min-width:980px;position:relative}
+.el{aspect-ratio:1/1.1;border-radius:6px;padding:4px 5px;cursor:pointer;display:flex;flex-direction:column;justify-content:space-between;color:#1d1d1f;transition:transform .12s,opacity .15s,box-shadow .12s;border:1px solid rgba(0,0,0,.06)}
+:root[data-theme="dark"] .el{color:#fff}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .el{color:#fff}}
+.el:hover,.el.sel{transform:scale(1.12);z-index:2;box-shadow:0 6px 18px rgba(0,0,0,.25)}
+.el .z{font-size:.62rem;opacity:.8}
+.el .s{font-size:1.15rem;font-weight:700;line-height:1}
+.el .nm{font-size:.52rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.el.dim{opacity:.15}
+.ph{display:flex;align-items:center;justify-content:center;font-size:.65rem;color:var(--muted);border:1px dashed var(--line);border-radius:6px}
+.drawer{position:fixed;top:0;right:0;height:100vh;width:min(320px,85vw);background:var(--card);border-left:1px solid var(--line);box-shadow:-8px 0 24px rgba(0,0,0,.12);transform:translateX(100%);transition:transform .25s ease;z-index:10}
+.drawer.open{transform:translateX(0)}
+.drawer-tab{position:absolute;left:-36px;top:50%;transform:translateY(-50%);width:36px;height:72px;border:1px solid var(--line);border-right:none;border-radius:8px 0 0 8px;background:var(--card);color:var(--fg);cursor:pointer;font-size:1rem;box-shadow:-4px 0 10px rgba(0,0,0,.08)}
+.drawer-head{display:flex;justify-content:space-between;align-items:center;padding:14px 18px;border-bottom:1px solid var(--line);font-weight:600;font-size:.9rem}
+.drawer-head button{border:none;background:none;color:var(--muted);font-size:1.3rem;cursor:pointer;line-height:1}
+.detail{padding:20px 18px;display:flex;flex-direction:column;gap:16px;align-items:flex-start}
+.detail .big{width:120px;height:132px}
+.detail .info dl{font-size:.9rem;gap:6px 16px}
+.drawer{overflow-y:auto}
+.add{margin-top:4px}
+.combine{padding:4px 18px 28px;border-top:1px solid var(--line)}
+.combine h3{font-size:.95rem;margin:16px 0 4px}
+.combine p.tip{color:var(--muted);font-size:.78rem;margin:0 0 10px}
+.mix{display:flex;flex-wrap:wrap;gap:6px;min-height:46px;padding:8px;border:1px dashed var(--line);border-radius:8px;align-items:center}
+.mix .empty{color:var(--muted);font-size:.78rem}
+.chip{display:flex;align-items:center;gap:4px;padding:4px 6px;border-radius:6px;font-weight:700;font-size:.85rem;color:#1d1d1f;animation:pop .3s}
+:root[data-theme="dark"] .chip{color:#fff}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .chip{color:#fff}}
+.chip button{border:none;background:rgba(0,0,0,.15);border-radius:4px;width:18px;height:18px;cursor:pointer;color:inherit;font-size:.8rem;line-height:1;padding:0}
+.chip .n{min-width:14px;text-align:center}
+.chip.fuse{animation:fuse .7s forwards}
+.formula{font-size:.8rem;color:var(--muted);margin-top:6px}
+.actions{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap}
+.btn{padding:7px 12px;border-radius:8px;border:1px solid var(--line);background:var(--bg);color:var(--fg);cursor:pointer;font-size:.82rem}
+.btn.primary{background:var(--fg);color:var(--bg);border-color:var(--fg)}
+.btn:disabled{opacity:.5;cursor:default}
+.result{margin-top:14px;padding:14px;border-radius:10px;background:var(--bg);border:1px solid var(--line);animation:pop .35s;font-size:.84rem;line-height:1.45}
+.result .f{font-size:1.6rem;font-weight:800}
+.result .name{font-weight:600;font-size:1rem}
+.result .eq{font-family:ui-monospace,Menlo,monospace;background:var(--card);border:1px solid var(--line);padding:6px 8px;border-radius:6px;margin:8px 0;display:block}
+.result .sugg{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+.steps{margin:8px 0 0;padding-left:18px}
+.steps li{margin-bottom:4px}
+@keyframes pop{from{transform:scale(.7);opacity:0}to{transform:scale(1);opacity:1}}
+@keyframes fuse{to{transform:scale(.3) translateY(10px);opacity:0}}
+body.drawer-open{padding-right:calc(min(320px,85vw) + 16px);transition:padding-right .25s ease}
+@media (max-width:700px){body.drawer-open{padding-right:16px}}
+.big{width:96px;height:106px;border-radius:8px;display:flex;flex-direction:column;justify-content:center;align-items:center;flex-shrink:0;color:#1d1d1f}
+:root[data-theme="dark"] .big{color:#fff}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .big{color:#fff}}
+.big .s{font-size:2.4rem;font-weight:800;line-height:1}
+.big .z{font-size:.8rem}
+.info h2{margin:0 0 4px;font-size:1.2rem}
+.info dl{display:grid;grid-template-columns:auto auto;gap:2px 14px;margin:0;font-size:.82rem}
+.info dt{color:var(--muted)}
+.info dd{margin:0}
+.hint{color:var(--muted);font-size:.85rem}
+.theme{margin-left:auto;border:1px solid var(--line);background:var(--card);color:var(--fg);border-radius:8px;padding:6px 10px;cursor:pointer;font-size:.8rem}
+</style>
+</head>
+<body>
+<h1>Periodic Table of the Elements</h1>
+<p class="sub">Hover or tap an element for details. Click a category to highlight it, or search by name, symbol, or number.</p>
+<div class="bar">
+  <input id="q" type="search" placeholder="Search (e.g. Fe, gold, 79)">
+  <div class="legend" id="legend"></div>
+  <button class="theme" id="theme">Toggle theme</button>
+</div>
+<div class="wrap"><div class="table" id="table"></div></div>
+<aside class="drawer" id="drawer" aria-label="Element details">
+  <button class="drawer-tab" id="drawerTab" aria-label="Toggle details">‹</button>
+  <div class="drawer-head"><span>Element details</span><button id="drawerClose" aria-label="Close">×</button></div>
+  <div class="detail" id="detail"><span class="hint">Select an element to see its details.</span></div>
+  <section class="combine">
+    <h3>Combine elements</h3>
+    <p class="tip">Use "Add to mix" on an element, or double-click it in the table. Adjust the counts, then combine.</p>
+    <div class="mix" id="mix"></div>
+    <div class="formula" id="formula"></div>
+    <div class="actions">
+      <button class="btn primary" id="combineBtn">Combine</button>
+      <button class="btn" id="clearBtn">Clear</button>
+      <button class="btn" id="waterBtn">💧 Make water</button>
+    </div>
+    <div id="result"></div>
+  </section>
+</aside>
+
+<script>
+const SYM="H He Li Be B C N O F Ne Na Mg Al Si P S Cl Ar K Ca Sc Ti V Cr Mn Fe Co Ni Cu Zn Ga Ge As Se Br Kr Rb Sr Y Zr Nb Mo Tc Ru Rh Pd Ag Cd In Sn Sb Te I Xe Cs Ba La Ce Pr Nd Pm Sm Eu Gd Tb Dy Ho Er Tm Yb Lu Hf Ta W Re Os Ir Pt Au Hg Tl Pb Bi Po At Rn Fr Ra Ac Th Pa U Np Pu Am Cm Bk Cf Es Fm Md No Lr Rf Db Sg Bh Hs Mt Ds Rg Cn Nh Fl Mc Lv Ts Og".split(" ");
+const NAME="Hydrogen Helium Lithium Beryllium Boron Carbon Nitrogen Oxygen Fluorine Neon Sodium Magnesium Aluminium Silicon Phosphorus Sulfur Chlorine Argon Potassium Calcium Scandium Titanium Vanadium Chromium Manganese Iron Cobalt Nickel Copper Zinc Gallium Germanium Arsenic Selenium Bromine Krypton Rubidium Strontium Yttrium Zirconium Niobium Molybdenum Technetium Ruthenium Rhodium Palladium Silver Cadmium Indium Tin Antimony Tellurium Iodine Xenon Caesium Barium Lanthanum Cerium Praseodymium Neodymium Promethium Samarium Europium Gadolinium Terbium Dysprosium Holmium Erbium Thulium Ytterbium Lutetium Hafnium Tantalum Tungsten Rhenium Osmium Iridium Platinum Gold Mercury Thallium Lead Bismuth Polonium Astatine Radon Francium Radium Actinium Thorium Protactinium Uranium Neptunium Plutonium Americium Curium Berkelium Californium Einsteinium Fermium Mendelevium Nobelium Lawrencium Rutherfordium Dubnium Seaborgium Bohrium Hassium Meitnerium Darmstadtium Roentgenium Copernicium Nihonium Flerovium Moscovium Livermorium Tennessine Oganesson".split(" ");
+const MASS="1.008 4.0026 6.94 9.0122 10.81 12.011 14.007 15.999 18.998 20.180 22.990 24.305 26.982 28.085 30.974 32.06 35.45 39.948 39.098 40.078 44.956 47.867 50.942 51.996 54.938 55.845 58.933 58.693 63.546 65.38 69.723 72.630 74.922 78.971 79.904 83.798 85.468 87.62 88.906 91.224 92.906 95.95 [98] 101.07 102.91 106.42 107.87 112.41 114.82 118.71 121.76 127.60 126.90 131.29 132.91 137.33 138.91 140.12 140.91 144.24 [145] 150.36 151.96 157.25 158.93 162.50 164.93 167.26 168.93 173.05 174.97 178.49 180.95 183.84 186.21 190.23 192.22 195.08 196.97 200.59 204.38 207.2 208.98 [209] [210] [222] [223] [226] [227] 232.04 231.04 238.03 [237] [244] [243] [247] [247] [251] [252] [257] [258] [259] [266] [267] [268] [269] [270] [269] [278] [281] [282] [285] [286] [289] [290] [293] [294] [294]".split(" ");
+const T="tttttttttt";
+const CAT=("ng"+"aemnnnhg"+"aepmnnhg"+"ae"+T+"pmmnhg"+"ae"+T+"ppmmhg"+"ae"+"l".repeat(15)+"t".repeat(9)+"pppphg"+"ae"+"c".repeat(15)+"t".repeat(9)+"pppphg").split("");
+const CATS={a:"Alkali metal",e:"Alkaline earth metal",t:"Transition metal",p:"Post-transition metal",m:"Metalloid",n:"Reactive nonmetal",h:"Halogen",g:"Noble gas",l:"Lanthanide",c:"Actinide"};
+
+function pos(z){ // returns [col,row,period,group]
+  if(z===1)return[1,1,1,1]; if(z===2)return[18,1,1,18];
+  if(z<=4)return[z-2,2,2,z-2]; if(z<=10)return[z+8,2,2,z+8];
+  if(z<=12)return[z-10,3,3,z-10]; if(z<=18)return[z,3,3,z];
+  if(z<=36)return[z-18,4,4,z-18]; if(z<=54)return[z-36,5,5,z-36];
+  if(z<=56)return[z-54,6,6,z-54]; if(z<=71)return[z-54,9,6,null]; if(z<=86)return[z-68,6,6,z-68];
+  if(z<=88)return[z-86,7,7,z-86]; if(z<=103)return[z-86,10,7,null]; return[z-100,7,7,z-100];
+}
+const STATE=z=>{const gas=[1,2,7,8,9,10,17,18,36,54,86];if(gas.includes(z))return"Gas";if(z===35||z===80)return"Liquid";if(z>103)return"Unknown (synthetic)";return"Solid"};
+
+const table=document.getElementById("table"),detail=document.getElementById("detail");
+const els=[];
+for(let z=1;z<=118;z++){
+  const [col,row]=pos(z),c=CAT[z-1];
+  const d=document.createElement("div");
+  d.className="el";d.style.gridColumn=col;d.style.gridRow=row;d.style.background=`var(--${c})`;
+  d.innerHTML=`<span class="z">${z}</span><span class="s">${SYM[z-1]}</span><span class="nm">${NAME[z-1]}</span>`;
+  d.tabIndex=0;
+  d.addEventListener("mouseenter",()=>show(z));
+  d.addEventListener("click",()=>select(z));
+  d.addEventListener("focus",()=>show(z));
+  table.appendChild(d);els.push(d);
+}
+[["57–71",6],["89–103",7]].forEach(([t,r])=>{const p=document.createElement("div");p.className="ph";p.style.gridColumn=3;p.style.gridRow=r;p.textContent=t;table.appendChild(p)});
+
+let selected=null;
+function show(z){
+  const [, ,period,group]=pos(z),c=CAT[z-1];
+  detail.innerHTML=`<div class="big" style="background:var(--${c})"><span class="z">${z}</span><span class="s">${SYM[z-1]}</span></div>
+  <div class="info"><h2>${NAME[z-1]}</h2><dl>
+  <dt>Atomic mass</dt><dd>${MASS[z-1]} u</dd>
+  <dt>Category</dt><dd>${CATS[c]}</dd>
+  <dt>Period / Group</dt><dd>${period} / ${group??"—"}</dd>
+  <dt>State at 20 °C</dt><dd>${STATE(z)}</dd></dl>
+  <button class="btn add" onclick="addToMix(${z})">+ Add ${SYM[z-1]} to mix</button></div>`;
+}
+function select(z){
+  els.forEach(e=>e.classList.remove("sel"));
+  if(selected===z){selected=null;return}
+  selected=z;els[z-1].classList.add("sel");show(z);setDrawer(true);
+}
+const drawer=document.getElementById("drawer"),tab=document.getElementById("drawerTab");
+function setDrawer(open){
+  drawer.classList.toggle("open",open);
+  document.body.classList.toggle("drawer-open",open);
+  tab.textContent=open?"›":"‹";
+}
+tab.onclick=()=>setDrawer(!drawer.classList.contains("open"));
+document.getElementById("drawerClose").onclick=()=>setDrawer(false);
+document.addEventListener("keydown",e=>{if(e.key==="Escape")setDrawer(false)});
+
+/* ---------- Combiner ---------- */
+const LIB=[
+ ["H2O","Water","2H₂ + O₂ → 2H₂O","Hydrogen burns in oxygen, releasing about 286 kJ of energy per mole of water formed."],
+ ["H2O2","Hydrogen peroxide","H₂ + O₂ → H₂O₂","Made industrially via the anthraquinone process; a common bleach and disinfectant."],
+ ["H2","Hydrogen gas","2H → H₂","Hydrogen atoms pair up into a diatomic molecule."],
+ ["O2","Oxygen gas","2O → O₂","Two oxygen atoms share a double bond. This is the oxygen we breathe."],
+ ["N2","Nitrogen gas","2N → N₂","A very stable triple bond; makes up about 78% of air."],
+ ["Cl2","Chlorine gas","2Cl → Cl₂","A toxic yellow-green gas used to make PVC and disinfect water."],
+ ["O3","Ozone","3O₂ → 2O₃","Formed by UV light or electrical discharge; shields Earth from UV radiation."],
+ ["CO2","Carbon dioxide","C + O₂ → CO₂","Complete combustion of carbon."],
+ ["CO","Carbon monoxide","2C + O₂ → 2CO","Incomplete combustion of carbon; a toxic, odorless gas."],
+ ["CH4","Methane","C + 2H₂ → CH₄","The main component of natural gas."],
+ ["CH2O","Formaldehyde","CH₃OH + ½O₂ → CH₂O + H₂O","Made by oxidizing methanol; used in resins and preservatives."],
+ ["C2H6O","Ethanol","C₂H₄ + H₂O → C₂H₅OH","Made by hydrating ethylene or by fermenting sugar."],
+ ["C6H12O6","Glucose","6CO₂ + 6H₂O → C₆H₁₂O₆ + 6O₂","Photosynthesis: plants use sunlight to build sugar."],
+ ["NH3","Ammonia","N₂ + 3H₂ → 2NH₃","The Haber–Bosch process, the basis of synthetic fertilizer."],
+ ["NO","Nitric oxide","N₂ + O₂ → 2NO","Forms at high temperatures, for example in lightning and engines."],
+ ["NO2","Nitrogen dioxide","2NO + O₂ → 2NO₂","A brown gas that contributes to smog."],
+ ["N2O","Nitrous oxide","NH₄NO₃ → N₂O + 2H₂O","Laughing gas, made by heating ammonium nitrate."],
+ ["HNO3","Nitric acid","3NO₂ + H₂O → 2HNO₃ + NO","The Ostwald process; used for fertilizers and explosives."],
+ ["HCl","Hydrogen chloride","H₂ + Cl₂ → 2HCl","Dissolved in water it becomes hydrochloric acid."],
+ ["NaCl","Sodium chloride","2Na + Cl₂ → 2NaCl","A violent reaction between a reactive metal and a toxic gas produces table salt."],
+ ["KCl","Potassium chloride","2K + Cl₂ → 2KCl","Used in fertilizers and as a salt substitute."],
+ ["NaOH","Sodium hydroxide","2Na + 2H₂O → 2NaOH + H₂","Lye, a strong base used in soap making."],
+ ["NaHCO3","Sodium bicarbonate","NaOH + CO₂ → NaHCO₃","Baking soda."],
+ ["H2S","Hydrogen sulfide","H₂ + S → H₂S","A toxic gas that smells like rotten eggs."],
+ ["SO2","Sulfur dioxide","S + O₂ → SO₂","Burning sulfur; a cause of acid rain."],
+ ["SO3","Sulfur trioxide","2SO₂ + O₂ → 2SO₃","An intermediate step in the contact process."],
+ ["H2SO4","Sulfuric acid","SO₃ + H₂O → H₂SO₄","The most produced industrial chemical in the world."],
+ ["MgO","Magnesium oxide","2Mg + O₂ → 2MgO","Magnesium burns with a brilliant white flame."],
+ ["CaO","Calcium oxide","2Ca + O₂ → 2CaO","Quicklime, used in cement and steelmaking."],
+ ["CaCO3","Calcium carbonate","CaO + CO₂ → CaCO₃","Limestone, chalk and seashells."],
+ ["Fe2O3","Iron(III) oxide","4Fe + 3O₂ → 2Fe₂O₃","Rust, formed by the slow oxidation of iron."],
+ ["Al2O3","Aluminium oxide","4Al + 3O₂ → 2Al₂O₃","A protective layer on aluminium; also sapphire and ruby."],
+ ["SiO2","Silicon dioxide","Si + O₂ → SiO₂","Quartz and sand; the main ingredient of glass."],
+ ["CuO","Copper(II) oxide","2Cu + O₂ → 2CuO","The black coating formed when copper is heated in air."],
+];
+const parse=f=>{const m={};for(const [,s,n] of f.matchAll(/([A-Z][a-z]?)(\d*)/g))m[s]=(m[s]||0)+(+n||1);return m};
+const keyOf=m=>Object.keys(m).sort().map(s=>s+m[s]).join("");
+const gcd=(a,b)=>b?gcd(b,a%b):a;
+const reduce=m=>{const g=Object.values(m).reduce(gcd);const r={};for(const s in m)r[s]=m[s]/g;return[r,g]};
+const sub=f=>f.replace(/(\d+)/g,"<sub>$1</sub>");
+const LIBMAP={};LIB.forEach(c=>LIBMAP[keyOf(parse(c[0]))]=c);
+const Z_OF={};SYM.forEach((s,i)=>Z_OF[s]=i+1);
+
+let mix={};
+const mixEl=document.getElementById("mix"),formulaEl=document.getElementById("formula"),resultEl=document.getElementById("result");
+function mixFormula(){return Object.entries(mix).map(([s,n])=>s+(n>1?n:"")).join("")}
+function renderMix(){
+  const entries=Object.entries(mix);
+  mixEl.innerHTML=entries.length?entries.map(([s,n])=>`<span class="chip" data-s="${s}" style="background:var(--${CAT[Z_OF[s]-1]})">
+    <button onclick="change('${s}',-1)" aria-label="Remove one ${s}">−</button>${s}<span class="n">×${n}</span>
+    <button onclick="change('${s}',1)" aria-label="Add one ${s}">+</button></span>`).join("")
+    :`<span class="empty">Your mix is empty.</span>`;
+  formulaEl.innerHTML=entries.length?`Formula so far: <strong>${sub(mixFormula())}</strong>`:"";
+}
+function addToMix(z){const s=SYM[z-1];mix[s]=(mix[s]||0)+1;setDrawer(true);renderMix()}
+function change(s,d){mix[s]+=d;if(mix[s]<=0)delete mix[s];renderMix()}
+function loadFormula(f){mix=parse(f);renderMix();combine()}
+function clearMix(){mix={};renderMix();resultEl.innerHTML=""}
+
+function combine(extra=""){
+  if(!Object.keys(mix).length){resultEl.innerHTML=`<div class="result">Add some elements to the mix first.</div>`;return}
+  const exact=LIBMAP[keyOf(mix)];
+  const [red,g]=reduce(mix);
+  const hit=exact||LIBMAP[keyOf(red)];
+  if(hit){
+    const mult=!exact&&g>1?`<div style="color:var(--muted)">Your mix makes ${g} molecules of this compound.</div>`:"";
+    resultEl.innerHTML=`<div class="result"><div class="f">${sub(hit[0])}</div><div class="name">${hit[1]}</div>${mult}
+      <span class="eq">${hit[2]}</span><div>${hit[3]}</div>${extra}</div>`;
+  }else{
+    const els=Object.keys(mix);
+    const sugg=LIB.filter(c=>{const m=parse(c[0]);return els.every(s=>m[s])}).slice(0,6);
+    resultEl.innerHTML=`<div class="result"><div class="name">No known compound for ${sub(mixFormula())}</div>
+      <div>These elements in this ratio don't form a compound in this table's library.${sugg.length?" Try one of these instead:":" Try a different combination."}</div>
+      <div class="sugg">${sugg.map(c=>`<button class="btn" onclick="loadFormula('${c[0]}')">${sub(c[0])} · ${c[1]}</button>`).join("")}</div></div>`;
+  }
+}
+
+const sleep=ms=>new Promise(r=>setTimeout(r,ms));
+const waterSVG=`<svg viewBox="0 0 160 90" width="180" style="display:block;margin:10px auto 0">
+  <line x1="80" y1="34" x2="38" y2="68" stroke="var(--muted)" stroke-width="4"/>
+  <line x1="80" y1="34" x2="122" y2="68" stroke="var(--muted)" stroke-width="4"/>
+  <circle cx="80" cy="34" r="22" fill="var(--n)"/><text x="80" y="40" text-anchor="middle" font-weight="700" font-size="16" fill="currentColor">O</text>
+  <circle cx="38" cy="68" r="14" fill="var(--n)" opacity=".8"/><text x="38" y="73" text-anchor="middle" font-weight="700" font-size="13" fill="currentColor">H</text>
+  <circle cx="122" cy="68" r="14" fill="var(--n)" opacity=".8"/><text x="122" y="73" text-anchor="middle" font-weight="700" font-size="13" fill="currentColor">H</text>
+  <text x="80" y="88" text-anchor="middle" font-size="9" fill="var(--muted)">bond angle ≈ 104.5°</text></svg>`;
+async function waterDemo(){
+  const btn=document.getElementById("waterBtn");btn.disabled=true;
+  setDrawer(true);clearMix();selected=null;select(8);
+  resultEl.innerHTML=`<div class="result"><div class="name">How water is made</div><ol class="steps" id="steps"></ol></div>`;
+  const steps=document.getElementById("steps");
+  const step=t=>{const li=document.createElement("li");li.innerHTML=t;li.style.animation="pop .3s";steps.appendChild(li)};
+  step("Take a <strong>hydrogen</strong> atom (H). It has 1 electron and wants 1 more.");addToMix(1);await sleep(1100);
+  step("Add a second <strong>hydrogen</strong> atom.");addToMix(1);await sleep(1100);
+  step("Add an <strong>oxygen</strong> atom (O). It has 6 outer electrons and wants 2 more.");addToMix(8);await sleep(1300);
+  step("Oxygen shares one electron pair with each hydrogen, forming two covalent bonds…");await sleep(1200);
+  mixEl.querySelectorAll(".chip").forEach(c=>c.classList.add("fuse"));await sleep(750);
+  combine(`<div style="margin-top:8px">In practice the gases are molecules: two H₂ molecules react with one O₂ molecule to make two water molecules. The reaction needs a spark to start, and then it releases a lot of heat.</div>${waterSVG}`);
+  renderMix();btn.disabled=false;
+}
+document.getElementById("combineBtn").onclick=()=>combine();
+document.getElementById("clearBtn").onclick=clearMix;
+document.getElementById("waterBtn").onclick=waterDemo;
+els.forEach((e,i)=>e.addEventListener("dblclick",()=>addToMix(i+1)));
+renderMix();
+table.addEventListener("mouseleave",()=>{if(selected)show(selected)});
+
+let activeCat=null;
+const legend=document.getElementById("legend");
+Object.entries(CATS).forEach(([k,v])=>{
+  const b=document.createElement("button");
+  b.innerHTML=`<span class="dot" style="background:var(--${k})"></span>${v}`;
+  b.onclick=()=>{activeCat=activeCat===k?null:k;[...legend.children].forEach(x=>x.classList.remove("on"));if(activeCat)b.classList.add("on");apply()};
+  legend.appendChild(b);
+});
+const q=document.getElementById("q");
+q.addEventListener("input",apply);
+function apply(){
+  const s=q.value.trim().toLowerCase();
+  els.forEach((e,i)=>{
+    const z=i+1;
+    const okCat=!activeCat||CAT[i]===activeCat;
+    const okQ=!s||SYM[i].toLowerCase()===s||NAME[i].toLowerCase().includes(s)||String(z)===s;
+    e.classList.toggle("dim",!(okCat&&okQ));
+  });
+  if(s){const i=els.findIndex((e,i)=>!e.classList.contains("dim"));if(i>=0)show(i+1)}
+}
+document.getElementById("theme").onclick=()=>{
+  const r=document.documentElement,dark=r.dataset.theme?r.dataset.theme==="dark":matchMedia("(prefers-color-scheme:dark)").matches;
+  r.dataset.theme=dark?"light":"dark";
+};
+</script>
+</body>
+</html>
